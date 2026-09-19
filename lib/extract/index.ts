@@ -23,6 +23,13 @@ const SUM_TOLERANCE = 1;
 /** Below this, the UI should tell the user to check the numbers themselves. */
 const LOW_CONFIDENCE = 0.8;
 
+/**
+ * How far a row's own arithmetic may drift before we stop believing it.
+ * Proportional, because a rupee out on 80 means something different from a
+ * rupee out on 8000.
+ */
+const ROW_TOLERANCE = 0.02;
+
 export function toExtractedBill(raw: RawExpense): ExtractedBill {
   const warnings: string[] = [];
 
@@ -41,6 +48,25 @@ export function toExtractedBill(raw: RawExpense): ExtractedBill {
     }
     if (resolvedUnitPrice === null && lineTotal && resolvedQuantity) {
       resolvedUnitPrice = round(lineTotal / resolvedQuantity, 2);
+    }
+
+    // A row that contradicts itself has been misread. On a poor photo Textract
+    // will return a confidently wrong digit, "88" as "8", while still reading
+    // the line total correctly, so quantity times rate stops matching the
+    // amount. The amount is the number to trust: it is corroborated by the
+    // bill total, and the rate is not corroborated by anything.
+    if (
+      resolvedQuantity &&
+      resolvedUnitPrice !== null &&
+      lineTotal !== null &&
+      Math.abs(resolvedQuantity * resolvedUnitPrice - lineTotal) >
+        Math.max(1, Math.abs(lineTotal) * ROW_TOLERANCE)
+    ) {
+      const corrected = round(lineTotal / resolvedQuantity, 2);
+      warnings.push(
+        `"${cleanItemName(row.item)}" did not add up, the rate was read as ${resolvedUnitPrice} but ${lineTotal} over ${resolvedQuantity} works out to ${corrected}`,
+      );
+      resolvedUnitPrice = corrected;
     }
 
     return {
@@ -85,6 +111,10 @@ export function toExtractedBill(raw: RawExpense): ExtractedBill {
     );
   }
 
+  // Textract's confidence describes how sure it is of the characters it saw,
+  // not whether the result makes sense. The degraded fixture comes back at
+  // 99.5% with a rate off by a factor of ten, so this is a weak signal and
+  // the arithmetic checks above are the ones that actually catch anything.
   const confidence = raw.confidences.length
     ? round(
         raw.confidences.reduce((a, b) => a + b, 0) / raw.confidences.length / 100,
