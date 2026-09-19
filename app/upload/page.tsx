@@ -13,6 +13,7 @@
  */
 
 import { useCallback, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ExtractedBill } from "@/lib/types";
 
@@ -95,7 +96,11 @@ export default function UploadPage() {
 
   return (
     <main className="mx-auto w-full max-w-lg flex-1 px-5 py-8">
-      <header className="mb-7">
+      <Link href="/ledger" className="text-sm opacity-55 transition hover:opacity-100">
+        ← Ledger
+      </Link>
+
+      <header className="mt-4 mb-7">
         <h1 className="text-2xl font-semibold tracking-tight">New bill</h1>
         <p className="mt-1 text-sm opacity-60">
           Photograph a supplier bill. It gets read and checked against your ledger.
