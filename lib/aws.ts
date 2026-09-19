@@ -29,17 +29,41 @@ function required(name: string): string {
 }
 
 export const config = {
-  /** Region for S3 and DynamoDB. */
+  /**
+   * Region for S3 and DynamoDB.
+   *
+   * Read from APP_REGION, not AWS_REGION, because Amplify reserves the whole
+   * "AWS" environment variable prefix and rejects the build outright if you
+   * try to set one. AWS_REGION stays as a fallback: it is the SDK's own
+   * convention locally, and the SSR runtime injects it in production.
+   */
   get region() {
-    return required("AWS_REGION");
+    const value = process.env.APP_REGION ?? process.env.AWS_REGION;
+    if (!value) {
+      throw new Error(
+        "Missing region. Set APP_REGION (or AWS_REGION locally). See .env.example.",
+      );
+    }
+    return value;
   },
   /** Region Bedrock is called in. Not necessarily the same as `region`. */
   get bedrockRegion() {
     return required("BEDROCK_REGION");
   },
-  /** Carries the "anthropic." prefix that Bedrock model IDs require. */
+  /**
+   * Vision model for reading bill photos. Carries the "anthropic." prefix
+   * that Bedrock model IDs require. Extraction accuracy on bad photos is the
+   * project's biggest risk, so this is the capable one.
+   */
   get modelId() {
     return required("BEDROCK_MODEL_ID");
+  },
+  /**
+   * Model that turns already-computed flag facts into a sentence. It does no
+   * reasoning and sits on the upload path, so it is picked for speed.
+   */
+  get explainModelId() {
+    return required("BEDROCK_EXPLAIN_MODEL_ID");
   },
   get billsBucket() {
     return required("BILLS_BUCKET");
