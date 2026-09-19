@@ -7,17 +7,26 @@
  * the other person discovers later.
  */
 
-/** One row on a supplier bill. */
+/**
+ * One row on a supplier bill.
+ *
+ * The three numbers are nullable because real bills leave them out. A row may
+ * print an amount with no rate, or a rate with no quantity, and extraction
+ * cannot always recover the missing one. Null is deliberate: defaulting to
+ * zero would put a 0.00 unit price into the ledger and make the next bill
+ * look like an infinite price rise.
+ */
 export type ExtractedLineItem = {
-  /** Item name exactly as printed on the bill, not normalised. */
+  /** Item name as printed, with a trailing quantity stripped if one bled in. */
   name: string;
-  quantity: number;
+  /** Null when the bill does not print one and it cannot be derived. */
+  quantity: number | null;
   /** "kg", "pcs", "ltr", or null when the bill does not say. */
   unit: string | null;
-  /** INR, per single unit. */
-  unitPrice: number;
-  /** INR, for the whole row. */
-  lineTotal: number;
+  /** INR per single unit. Null means this row cannot be price checked. */
+  unitPrice: number | null;
+  /** INR for the whole row. Null means it does not count toward any sum. */
+  lineTotal: number | null;
 };
 
 /** What the vision model returns for one bill photo. No ledger context. */

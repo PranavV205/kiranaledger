@@ -1,0 +1,35 @@
+{
+  "supplierName": "VERMA DISTRIBUTORS",
+  "billNumber": "VD-1182",
+  "billDate": "2026-09-19",
+  "dueDate": "2026-09-23",
+  "lineItems": [
+    {
+      "name": "Tea Leaves",
+      "quantity": 8.0,
+      "unit": "kg",
+      "unitPrice": 310.0,
+      "lineTotal": 2480.0
+    },
+    {
+      "name": "Washing Powder",
+      "quantity": 12.0,
+      "unit": "pcs",
+      "unitPrice": 95.0,
+      "lineTotal": 1140.0
+    },
+    {
+      "name": "Mustard Oil",
+      "quantity": 10.0,
+      "unit": "Itr",
+      "unitPrice": 168.0,
+      "lineTotal": 1680.0
+    }
+  ],
+  "subtotal": null,
+  "tax": null,
+  "total": 5300.0,
+  "currency": "INR",
+  "confidence": 1.0,
+  "warnings": []
+}

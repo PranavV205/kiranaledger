@@ -16,6 +16,7 @@
 import { S3Client } from "@aws-sdk/client-s3";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { TextractClient } from "@aws-sdk/client-textract";
 import { AnthropicBedrockMantle } from "@anthropic-ai/bedrock-sdk";
 
 function required(name: string): string {
@@ -50,20 +51,25 @@ export const config = {
   get bedrockRegion() {
     return required("BEDROCK_REGION");
   },
-  /**
-   * Vision model for reading bill photos. Carries the "anthropic." prefix
-   * that Bedrock model IDs require. Extraction accuracy on bad photos is the
-   * project's biggest risk, so this is the capable one.
-   */
-  get modelId() {
-    return required("BEDROCK_MODEL_ID");
+  /** OpenRouter key for the flag explanation call. */
+  get openRouterKey() {
+    return required("OPENROUTER_API_KEY");
   },
   /**
    * Model that turns already-computed flag facts into a sentence. It does no
-   * reasoning and sits on the upload path, so it is picked for speed.
+   * reasoning of its own, so a free model is sufficient, and it sits on the
+   * upload path, which is why speed is the thing being optimised for.
    */
-  get explainModelId() {
-    return required("BEDROCK_EXPLAIN_MODEL_ID");
+  get explainModel() {
+    return required("OPENROUTER_MODEL");
+  },
+  /**
+   * Bedrock model, unused for now. Access is pending on this account, so
+   * extraction runs on Textract instead. Kept so the explanation call can be
+   * moved back onto Bedrock without rewiring anything else.
+   */
+  get bedrockModelId() {
+    return required("BEDROCK_MODEL_ID");
   },
   get billsBucket() {
     return required("BILLS_BUCKET");
@@ -88,6 +94,13 @@ export function ddb(): DynamoDBDocumentClient {
     { marshallOptions: { removeUndefinedValues: true } },
   );
   return ddbClient;
+}
+
+let textractClient: TextractClient | undefined;
+/** Reads bill photos. AnalyzeExpense is purpose built for invoices. */
+export function textract(): TextractClient {
+  textractClient ??= new TextractClient({ region: config.region });
+  return textractClient;
 }
 
 let bedrockClient: AnthropicBedrockMantle | undefined;

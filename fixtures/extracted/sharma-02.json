@@ -1,0 +1,42 @@
+{
+  "supplierName": "SHARMA TRADERS",
+  "billNumber": "ST-4471",
+  "billDate": "2026-09-18",
+  "dueDate": "2026-09-25",
+  "lineItems": [
+    {
+      "name": "Toor Dal",
+      "quantity": 10.0,
+      "unit": "kg",
+      "unitPrice": 145.0,
+      "lineTotal": 1450.0
+    },
+    {
+      "name": "Sunflower Oil",
+      "quantity": 5.0,
+      "unit": "Itr",
+      "unitPrice": 152.0,
+      "lineTotal": 760.0
+    },
+    {
+      "name": "Sugar",
+      "quantity": 25.0,
+      "unit": "kg",
+      "unitPrice": 44.0,
+      "lineTotal": 1100.0
+    },
+    {
+      "name": "Basmati Rice",
+      "quantity": 20.0,
+      "unit": "kg",
+      "unitPrice": 88.0,
+      "lineTotal": 1760.0
+    }
+  ],
+  "subtotal": null,
+  "tax": null,
+  "total": 5070.0,
+  "currency": "INR",
+  "confidence": 0.997,
+  "warnings": []
+}
