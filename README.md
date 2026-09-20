@@ -4,6 +4,8 @@ Built for First Commit, the opening hackathon of AWS's Bharat Builds Tour by WeM
 Track: Ship It
 
 **Live:** https://main.d2djabvtfe8b0r.amplifyapp.com
+**Demo:** https://www.youtube.com/watch?v=8-5c6h1pAoA
+**Writeup:** https://builder.aws.com/content/3JbJUkMmGCylKQgWUMSqk9pjfX9/textract-read-88-as-8-and-gave-it-995percent-confidence
 
 ## The Problem
 
@@ -83,11 +85,20 @@ That exercises the real IAM action behind each service and names whichever one i
 
 ## Demo Video
 
-[Link to be added. Under 3 minutes, YouTube, public or unlisted]
+**https://www.youtube.com/watch?v=8-5c6h1pAoA** (2:01)
+
+Four bills in sequence: a real cafe receipt, a supplier bill, the same supplier
+three weeks later with a price jump caught, and a bill re-photographed and
+caught as a duplicate.
 
 ## Writeup
 
-[Link to AWS Builder Center article to be added]
+**https://builder.aws.com/content/3JbJUkMmGCylKQgWUMSqk9pjfX9/textract-read-88-as-8-and-gave-it-995percent-confidence**
+
+Published on AWS Builder Center. Covers the build and three bugs that only
+turned up once real photographs went through it: a row that contradicted its
+own arithmetic, a timeout that only covered the response headers, and a price
+comparison anchored to write order instead of the bill date.
 
 ## License
 
