@@ -20,6 +20,17 @@ import {
 /** Rupee tolerance when checking line items against the printed total. */
 const SUM_TOLERANCE = 1;
 
+/**
+ * How much the total may exceed the line items before it stops looking like
+ * tax and starts looking like a misread.
+ *
+ * Indian printed bills routinely add GST and a service charge on top of the
+ * items, so the two genuinely do not match and that is not an error. The
+ * worst realistic combination is 28% GST plus a service charge, so anything
+ * past this is more likely an item that was missed than a tax line.
+ */
+const MAX_TAX_FRACTION = 0.35;
+
 /** Below this, the UI should tell the user to check the numbers themselves. */
 const LOW_CONFIDENCE = 0.8;
 
@@ -96,10 +107,44 @@ export function toExtractedBill(raw: RawExpense): ExtractedBill {
   }
 
   const summed = lineItems.reduce((n, item) => n + (item.lineTotal ?? 0), 0);
-  if (total !== null && lineItems.length > 0 && Math.abs(summed - total) > SUM_TOLERANCE) {
-    warnings.push(
-      `Line items add up to ${summed.toFixed(2)} but the bill total reads ${total.toFixed(2)}`,
-    );
+  let subtotal = parseAmount(raw.subtotal);
+  let tax = parseAmount(raw.tax);
+
+  // Line items rarely add up to the printed total on an Indian bill, because
+  // GST and a service charge sit between them. Textract does not reliably
+  // label those lines, so the gap has to be interpreted rather than reported
+  // as a discrepancy. Getting this wrong means every printed restaurant bill
+  // arrives carrying a warning that says nothing useful.
+  if (total !== null && lineItems.length > 0) {
+    const gap = total - summed;
+
+    if (gap < -SUM_TOLERANCE) {
+      // Items add up to more than the bill asks for. Tax cannot explain that,
+      // so something was read twice or read wrong.
+      warnings.push(
+        `Line items add up to ${summed.toFixed(2)}, which is more than the bill total of ${total.toFixed(2)}`,
+      );
+    } else if (gap > SUM_TOLERANCE) {
+      if (summed > 0 && gap / summed <= MAX_TAX_FRACTION) {
+        // Consistent with tax and charges. Record it as such instead of
+        // complaining, so the stored bill adds up the way the paper does.
+        if (subtotal === null) subtotal = round(summed, 2);
+
+        // Textract's own TAX field is not trustworthy here. Indian bills
+        // split GST into CGST and SGST and print a service charge separately,
+        // and it tends to return whichever single line it recognised. A bill
+        // showing 330 plus 16.50 gratuity plus 8.25 twice comes back claiming
+        // 8.25 of tax, which does not reconcile with anything. Keep its value
+        // only when the arithmetic works, otherwise take the whole gap.
+        const reconciles =
+          tax !== null && Math.abs(summed + tax - total) <= SUM_TOLERANCE;
+        if (!reconciles) tax = round(gap, 2);
+      } else {
+        warnings.push(
+          `Line items add up to ${summed.toFixed(2)} but the bill total reads ${total.toFixed(2)}, so an item may have been missed`,
+        );
+      }
+    }
   }
   if (lineItems.length === 0) {
     warnings.push("No line items were found on this bill");
@@ -131,8 +176,8 @@ export function toExtractedBill(raw: RawExpense): ExtractedBill {
     billDate: billDate ?? today(),
     dueDate: parseDate(raw.dueDate),
     lineItems,
-    subtotal: parseAmount(raw.subtotal),
-    tax: parseAmount(raw.tax),
+    subtotal,
+    tax,
     total: total ?? round(summed, 2),
     currency: "INR",
     confidence,

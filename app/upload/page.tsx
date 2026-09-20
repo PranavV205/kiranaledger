@@ -247,6 +247,13 @@ function Review({
           ))}
         </ul>
 
+        {bill.tax !== null && (
+          <div className="flex items-baseline justify-between border-t border-black/10 px-5 py-2.5 text-sm dark:border-white/10">
+            <span className="opacity-60">Tax and charges</span>
+            <span className="tabular-nums opacity-75">{money(bill.tax)}</span>
+          </div>
+        )}
+
         <div className="flex items-baseline justify-between border-t border-black/10 px-5 py-4 dark:border-white/10">
           <span className="text-sm font-medium opacity-70">Total</span>
           <span className="text-xl font-semibold tabular-nums">{money(bill.total)}</span>
