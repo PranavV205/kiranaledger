@@ -58,7 +58,10 @@ export async function POST(request: Request) {
       Promise.all(
         bill.lineItems
           .filter((item) => item.unitPrice !== null)
-          .map(async (item) => [item.name, await getLastItemPrice(supplierSlug, item.name)] as const),
+          .map(
+            async (item) =>
+              [item.name, await getLastItemPrice(supplierSlug, item.name, bill.billDate)] as const,
+          ),
       ),
     ]);
 

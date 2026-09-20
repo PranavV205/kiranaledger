@@ -184,23 +184,35 @@ export type PricePoint = {
 };
 
 /**
- * The most recent recorded price for one item from one supplier.
+ * The price this supplier last charged for an item, as of a given bill date.
  *
  * Scoped to the supplier on purpose. Two suppliers charging different prices
  * for the same sack of dal is ordinary commerce, not something to flag; the
  * same supplier changing their own price is the thing worth noticing.
+ *
+ * Scoped by date for a subtler reason. Bills do not arrive in the order they
+ * were issued: an owner photographs a stack at the end of the week, or
+ * re-photographs an old bill. Comparing against whatever was recorded most
+ * recently rather than what was charged most recently produces confident
+ * nonsense, an August bill reported as a price drop against a September one.
+ * The sort key starts with the bill date, so asking for the newest key at or
+ * below this bill's date answers the question actually being asked.
  */
 export async function getLastItemPrice(
   supplierSlug: string,
   itemName: string,
+  onOrBefore: string,
 ): Promise<PricePoint | null> {
   const result = await ddb().send(
     new QueryCommand({
       TableName: config.ledgerTable,
-      KeyConditionExpression: "pk = :pk AND begins_with(sk, :prefix)",
+      KeyConditionExpression: "pk = :pk AND sk BETWEEN :from AND :to",
       ExpressionAttributeValues: {
         ":pk": itemPk(supplierSlug, slugify(itemName)),
-        ":prefix": "PRICE#",
+        ":from": "PRICE#",
+        // "~" sorts above every character the key can contain, so this takes
+        // in every bill dated on or before this one.
+        ":to": `PRICE#${onOrBefore}~`,
       },
       ScanIndexForward: false,
       Limit: 1,
